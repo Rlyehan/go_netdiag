@@ -89,7 +89,24 @@ func main() {
 		},
 	}
 
-  rootCmd.AddCommand(cmdPing, cmdSpeed, cmdDNS)
+	var cmdScan = &cobra.Command{
+		Use:   "scan [hostname]",
+		Short: "Scan ports of a host",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			for i := 1; i <= 1024; i++ {
+				address := fmt.Sprintf("%s:%d", args[0], i)
+				conn, err := net.Dial("tcp", address)
+				if err != nil {
+					continue
+				}
+				conn.Close()
+				fmt.Printf("%d open\n", i)
+			}
+		},
+	}
+
+  rootCmd.AddCommand(cmdPing, cmdSpeed, cmdDNS, cmdScan)
   if err := rootCmd.Execute(); err != nil {
     fmt.Println(err)
     os.Exit(1)
