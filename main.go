@@ -5,6 +5,10 @@ import (
   "github.com/go-ping/ping"
 	"github.com/spf13/cobra"
 	"os"
+  "io"
+	"io/ioutil"
+	"net/http"
+	"time"
 )
 
 func main() {
@@ -33,7 +37,43 @@ func main() {
     },
   }
 
-  rootCmd.AddCommand(cmdPing)
+  var cmdSpeed = &cobra.Command{
+    Use: "speed",
+    Short: "Check internet speed",
+    Run: func(cmd *cobra.Command, args []string) {
+		var totalSpeed float64
+		sampleCount := 5
+
+		for i := 1; i <= sampleCount; i++ {
+			start := time.Now()
+
+			resp, err := http.Get("https://speed.cloudflare.com/__down?bytes=1048576")
+			if err != nil {
+				fmt.Println("Error:", err)
+				return
+			}
+			_, err = io.Copy(ioutil.Discard, resp.Body)
+			resp.Body.Close()
+			if err != nil {
+				fmt.Println("Error:", err)
+				return
+			}
+
+			elapsed := time.Since(start).Seconds()
+			fileSizeMB := float64(1)
+			speed := (fileSizeMB * 8) / elapsed
+
+			totalSpeed += speed
+			fmt.Printf("Sample %d: %.2f Mbps\n", i, speed)
+		}
+
+		avgSpeed := totalSpeed / float64(sampleCount)
+		fmt.Printf("Average download speed: %.2f Mbps\n", avgSpeed)
+    },
+  }
+
+
+  rootCmd.AddCommand(cmdPing, cmdSpeed)
   if err := rootCmd.Execute(); err != nil {
     fmt.Println(err)
     os.Exit(1)
