@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+  "net"
 )
 
 func main() {
@@ -72,8 +73,23 @@ func main() {
     },
   }
 
+  	var cmdDNS = &cobra.Command{
+		Use:   "dns [hostname]",
+		Short: "Lookup DNS for a host",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			ips, err := net.LookupIP(args[0])
+			if err != nil {
+				fmt.Println("ERROR:", err)
+				return
+			}
+			for _, ip := range ips {
+				fmt.Println("IP:", ip)
+			}
+		},
+	}
 
-  rootCmd.AddCommand(cmdPing, cmdSpeed)
+  rootCmd.AddCommand(cmdPing, cmdSpeed, cmdDNS)
   if err := rootCmd.Execute(); err != nil {
     fmt.Println(err)
     os.Exit(1)
